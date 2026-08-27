@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+    <meta name="theme-color" content="#061a66" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="format-detection" content="telephone=no" />
+    <title>鴨鴨基因實驗室</title>
+    <link rel="manifest" href="./manifest.webmanifest?v=duck-gene-lab-r10" />
+    <link rel="preload" href="./assets/dna-helix-ambient.png?v=duck-gene-lab-r10" as="image" type="image/png" fetchpriority="high" />
+    <link rel="preload" href="./assets/duck-gene-palette-sheet.png?v=duck-gene-lab-r10" as="image" type="image/png" fetchpriority="high" />
+    <link rel="preload" href="./assets/duck-mascot-yellow.png?v=duck-gene-lab-r10" as="image" type="image/png" fetchpriority="high" />
+    <link rel="stylesheet" href="./game.css?v=duck-gene-lab-r10" />
+  </head>
+  <body>
+    <div id="app">
+      <main id="game-shell" aria-label="鴨鴨基因實驗室遊戲">
+        <div class="dna-ambient" aria-hidden="true">
+          <img src="./assets/dna-helix-ambient.png?v=duck-gene-lab-r10" alt="" width="1254" height="1254" decoding="async" />
+        </div>
+
+        <header class="hud" aria-label="遊戲資訊">
+          <div class="brand-mini"><span>DUCK GENE LAB</span><strong>鴨鴨基因實驗室</strong></div>
+          <div class="hud-stat"><span>分數</span><strong id="scoreValue">0</strong></div>
+          <div class="hud-stat combo-stat"><span>連續</span><strong id="comboValue">0</strong></div>
+          <div class="hud-stat"><span>最佳</span><strong id="bestValue">0</strong></div>
+          <div class="hud-actions">
+            <button id="assistButton" class="icon-button" type="button" aria-pressed="false" aria-label="切換色彩輔助"><span class="action-glyph" aria-hidden="true">◐</span><small>輔助</small></button>
+            <button id="soundButton" class="icon-button" type="button" aria-pressed="true" aria-label="關閉聲音"><span id="soundGlyph" class="action-glyph" aria-hidden="true">♪</span><small id="soundLabel">聲音</small></button>
+            <button id="fullscreenButton" class="icon-button" type="button" aria-label="全螢幕"><span class="action-glyph" aria-hidden="true">⛶</span><small>滿版</small></button>
+            <button id="pauseButton" class="icon-button" type="button" aria-label="暫停"><span class="action-glyph" aria-hidden="true">Ⅱ</span><small>暫停</small></button>
+          </div>
+        </header>
+
+        <div class="gene-divider" aria-hidden="true"><span></span></div>
+
+        <section class="parents-panel" aria-label="這一回合的兩個親代基因樣本">
+          <div class="parent-card">
+            <span class="sample-tag">親代 A</span>
+            <span id="parentOne" class="duck-sprite parent-duck" aria-hidden="true"></span>
+            <span id="parentOneLabel" class="color-label">黃</span>
+          </div>
+          <div class="mix-core" aria-hidden="true">
+            <span class="plus">＋</span>
+            <span class="mix-drop">🧬</span>
+            <small>基因配對</small>
+          </div>
+          <div class="parent-card">
+            <span class="sample-tag">親代 B</span>
+            <span id="parentTwo" class="duck-sprite parent-duck" aria-hidden="true"></span>
+            <span id="parentTwoLabel" class="color-label">藍</span>
+          </div>
+        </section>
+
+        <div id="roundPrompt" class="round-prompt" aria-live="polite">找出遺傳到正確顏色的鴨寶寶！</div>
+        <div id="scorePop" class="score-pop" aria-hidden="true"></div>
+
+        <section id="pond" class="pond" aria-label="候選鴨寶寶實驗艙">
+          <div id="candidateGrid" class="candidate-grid" role="group" aria-label="在鴨寶寶落回實驗艙前點選正確答案"></div>
+        </section>
+
+        <div id="liveRegion" class="sr-only" aria-live="assertive"></div>
+
+        <section id="menuOverlay" class="overlay menu-overlay" aria-label="開始選單">
+          <div class="menu-card">
+            <div class="title-ducks" aria-hidden="true">
+              <img class="title-mascot" src="./assets/duck-mascot-yellow.png?v=duck-gene-lab-r10" width="384" height="384" alt="" decoding="async" fetchpriority="high" />
+            </div>
+            <div class="menu-content">
+              <p class="eyebrow">DUCK GENE LAB</p>
+              <h1>鴨鴨基因實驗室</h1>
+              <p class="menu-copy">觀察兩隻親代鴨鴨的顏色，在寶寶從實驗艙跳起、落回去以前，找出正確的遺傳配色。</p>
+              <div class="rule-chips" aria-label="重要規則">
+                <span>12 組基因配方</span><span>分數越高越快</span><span>每題最高 10 分</span>
+              </div>
+              <button id="startButton" class="primary-button" type="button">啟動基因實驗</button>
+              <button id="rulesButton" class="text-button" type="button">查看基因配方表</button>
+              <p class="legal-note">原創鴨鴨致敬作品，未使用原作角色、圖像、音樂或程式素材。</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="rulesOverlay" class="overlay hidden" aria-label="遊戲說明">
+          <div class="dialog-card rules-card">
+            <p class="eyebrow">GENE GUIDE</p>
+            <h2>基因實驗守則</h2>
+            <ol class="rules-list">
+              <li><strong>讀取親代</strong><span>先看上方親代 A、親代 B 的鎖定色號。</span></li>
+              <li><strong>判斷遺傳</strong><span>依照基因配方，找出寶寶應該遺傳到的顏色。</span></li>
+              <li><strong>越高分越多</strong><span>最高點是 10 分，下降位置切成十段，最低一段是 1 分。</span></li>
+            </ol>
+            <div class="gene-recipes" aria-label="新增基因配方">
+              <span>橙＋橙＝橙</span><span>紅＋黃＝橙</span>
+              <span>黃＋白＝淺黃</span><span>黃＋淺藍＝粉綠</span>
+              <span>淺藍＋藍＝稍深的淺藍</span><span>紫紅＋藍＝靛色</span>
+              <span>紫紅＋白＝粉紫紅</span>
+            </div>
+            <p class="rules-tip">鴨寶寶一到最高點就會立刻下降；完全落下便結束。可按「輔助」顯示顏色名稱。</p>
+            <button id="closeRulesButton" class="primary-button" type="button">知道了</button>
+          </div>
+        </section>
+
+        <section id="pauseOverlay" class="overlay hidden" aria-label="遊戲暫停">
+          <div class="dialog-card compact-card">
+            <p class="eyebrow">PAUSED</p>
+            <h2>實驗暫停中</h2>
+            <button id="resumeButton" class="primary-button" type="button">繼續遊戲</button>
+            <button id="quitButton" class="text-button" type="button">回到主選單</button>
+          </div>
+        </section>
+
+        <section id="gameOverOverlay" class="overlay hidden" aria-label="遊戲結束">
+          <div class="dialog-card result-card">
+            <div id="resultDuck" class="duck-sprite result-duck" style="--sprite-x-pos:0%;--sprite-y-pos:33.333333%" aria-hidden="true"></div>
+            <p id="resultEyebrow" class="eyebrow">這次差一點！</p>
+            <h2>鴨寶寶回到實驗艙了</h2>
+            <div class="result-grid">
+              <div><span>本次分數</span><strong id="finalScore">0</strong></div>
+              <div><span>找到寶寶</span><strong id="finalRounds">0</strong></div>
+              <div><span>最佳紀錄</span><strong id="finalBest">0</strong></div>
+            </div>
+            <button id="retryButton" class="primary-button" type="button">再玩一次</button>
+            <button id="menuButton" class="text-button" type="button">回到主選單</button>
+          </div>
+        </section>
+
+      </main>
+    </div>
+
+    <script src="./engine.js?v=duck-gene-lab-r10"></script>
+    <script src="./game.js?v=duck-gene-lab-r10"></script>
+  </body>
+</html>

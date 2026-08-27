@@ -1,0 +1,57 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "../vendor/shadcn-tailwind-4.13.0.css";
+@source "../components";
+
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+
+  .scrollbar-gutter-stable {
+    scrollbar-gutter: stable;
+  }
+}
+
+:root {
+  color-scheme: light;
+  background: #02082f;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+.game-page {
+  width: 100%;
+  height: 100%;
+  min-height: 100dvh;
+  margin: 0;
+  overflow: hidden;
+  background: #02082f;
+}
+
+body {
+  padding: 0;
+  overscroll-behavior: none;
+  touch-action: none;
+}
+
+.game-page {
+  position: fixed;
+  inset: 0;
+}
+
+.game-frame {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #061a66;
+}

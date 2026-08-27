@@ -1,0 +1,12 @@
+{
+  "name": "鴨鴨基因實驗室",
+  "short_name": "鴨鴨基因",
+  "description": "觀察親代顏色，在鴨寶寶落回實驗艙前找出正確的遺傳配色。",
+  "lang": "zh-Hant",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "any",
+  "background_color": "#061a66",
+  "theme_color": "#061a66"
+}

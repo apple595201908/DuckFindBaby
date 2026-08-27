@@ -1,0 +1,4 @@
+interface:
+  display_name: "鴨鴨基因實驗室開發"
+  short_description: "Maintain the Duck Gene Lab mobile web game"
+  default_prompt: "Use $duck-gene-lab-development to maintain or extend the Duck Gene Lab web game without breaking its gameplay contract."
