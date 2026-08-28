@@ -156,6 +156,12 @@
     gain.gain.exponentialRampToValueAtTime(volume || 0.06, start + 0.012);
     gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
     oscillator.connect(gain).connect(state.sfxBus || audio.destination);
+    // Mobile browsers do not always release finished Web Audio graphs quickly.
+    // Disconnecting them explicitly keeps long play sessions memory-stable.
+    oscillator.addEventListener("ended", () => {
+      oscillator.disconnect();
+      gain.disconnect();
+    }, { once: true });
     oscillator.start(start);
     oscillator.stop(start + duration + 0.02);
   }
@@ -184,6 +190,7 @@
     392, 493.88, 587.33, 493.88, 392, 587.33, 783.99, 987.77,
   ]);
   const BGM_BASS = Object.freeze([130.81, 110, 87.31, 98]);
+  const MAX_BGM_NOTES_PER_TICK = 8;
 
   function scheduleBgmNote(frequency, start, duration, type, volume) {
     if (!state.audio || !state.musicBus) return;
@@ -195,6 +202,10 @@
     gain.gain.exponentialRampToValueAtTime(volume, start + 0.018);
     gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
     oscillator.connect(gain).connect(state.musicBus);
+    oscillator.addEventListener("ended", () => {
+      oscillator.disconnect();
+      gain.disconnect();
+    }, { once: true });
     oscillator.start(start);
     oscillator.stop(start + duration + 0.03);
   }
@@ -209,10 +220,16 @@
       state.bgmTimer = 0;
       return;
     }
-    // Schedule just ahead of playback to avoid gaps, then refill frequently so
-    // pause and mute actions still respond almost immediately.
-    const horizon = state.audio.currentTime + 0.16;
-    while (state.bgmNextNote < horizon) {
+    // A mobile browser may throttle this timer while the device is busy or the
+    // page is backgrounded. Never try to catch up every missed note at once:
+    // that creates thousands of audio nodes and can freeze a long session.
+    const now = state.audio.currentTime;
+    if (!Number.isFinite(state.bgmNextNote) || state.bgmNextNote < now - 0.1) {
+      state.bgmNextNote = now + 0.04;
+    }
+    const horizon = now + 0.16;
+    let scheduledNotes = 0;
+    while (state.bgmNextNote < horizon && scheduledNotes < MAX_BGM_NOTES_PER_TICK) {
       const step = state.bgmStep % BGM_MELODY.length;
       const stepDuration = getBgmStepDuration();
       scheduleBgmNote(BGM_MELODY[step], state.bgmNextNote, stepDuration * 0.82, "triangle", 0.044);
@@ -225,6 +242,7 @@
       }
       state.bgmStep += 1;
       state.bgmNextNote += stepDuration;
+      scheduledNotes += 1;
     }
     state.bgmTimer = window.setTimeout(scheduleBgm, 70);
   }
@@ -616,7 +634,7 @@
   if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
     // Offline support is progressive: registration failure is non-fatal and
     // online play remains available in restricted or private browser modes.
-    window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js?v=duck-gene-lab-r10").catch(() => {}));
+    window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js?v=duck-gene-lab-r22").catch(() => {}));
   }
 
   // Retained for compatibility with the stopped Android wrapper. It is inert in

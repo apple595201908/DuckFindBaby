@@ -6,7 +6,7 @@ export default function Home() {
           the asset URLs inside public/game/index.html. */}
       <iframe
         className="game-frame"
-        src="/game/index.html?v=duck-gene-lab-r10"
+        src="/game/index.html?v=duck-gene-lab-r22"
         title="鴨鴨基因實驗室遊戲"
         allow="fullscreen; autoplay"
         allowFullScreen

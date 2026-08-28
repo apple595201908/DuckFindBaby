@@ -17,8 +17,8 @@
     { id: 9, key: "light-yellow", name: "淺黃", mark: "☀", hex: "#FFF890", ring: "#B9A900", x: 1, y: 2 },
     { id: 10, key: "pale-green", name: "粉綠", mark: "⬣", hex: "#B7FE94", ring: "#4A9B35", x: 2, y: 2 },
     { id: 11, key: "medium-light-blue", name: "稍深的淺藍", mark: "⬡", hex: "#3EA0FB", ring: "#1266B4", x: 3, y: 2 },
-    { id: 12, key: "indigo", name: "靛色", mark: "✶", hex: "#7B3EFE", ring: "#4820A8", x: 0, y: 3 },
-    { id: 13, key: "pink-magenta", name: "粉紫紅", mark: "✿", hex: "#FA70BE", ring: "#B72F7C", x: 1, y: 3 },
+    { id: 12, key: "indigo", name: "靛色", mark: "✶", hex: "#2D219F", ring: "#190F62", x: 0, y: 3 },
+    { id: 13, key: "pink-magenta", name: "粉紫紅", mark: "✿", hex: "#FF96D0", ring: "#C34A8F", x: 1, y: 3 },
   ]);
 
   // The seven reference-image recipes come first, followed by the five
@@ -55,6 +55,7 @@
     Object.freeze([4, 8]),
     Object.freeze([4, 12]),
     Object.freeze([4, 13]),
+    Object.freeze([1, 8]),
     Object.freeze([8, 12]),
     Object.freeze([8, 13]),
     Object.freeze([12, 13]),
@@ -125,15 +126,24 @@
     const count = getCandidateCount(round);
     const selected = [target];
     const decoys = shuffle(PALETTE.map((color) => color.id).filter((id) => id !== target), rng);
-    // Fairness is pairwise: each decoy must differ clearly from the target and
-    // every selected decoy, rather than merely avoiding exact duplicates.
-    for (const colorId of decoys) {
-      if (selected.every((selectedId) => !areColorsTooSimilar(selectedId, colorId))) {
+    // A greedy pass can make an unlucky early choice and run out of compatible
+    // colors at six options. This tiny backtracking search keeps the randomized
+    // order while guaranteeing a complete, pairwise-distinct answer set.
+    function selectCompatibleDecoys(startIndex) {
+      if (selected.length === count) return true;
+      if (selected.length + decoys.length - startIndex < count) return false;
+      for (let index = startIndex; index < decoys.length; index += 1) {
+        const colorId = decoys[index];
+        if (!selected.every((selectedId) => !areColorsTooSimilar(selectedId, colorId))) {
+          continue;
+        }
         selected.push(colorId);
+        if (selectCompatibleDecoys(index + 1)) return true;
+        selected.pop();
       }
-      if (selected.length === count) break;
+      return false;
     }
-    if (selected.length !== count) throw new Error("Not enough distinct candidate colors");
+    if (!selectCompatibleDecoys(0)) throw new Error("Not enough distinct candidate colors");
     const candidates = shuffle(selected, rng);
     return Object.freeze({
       first,

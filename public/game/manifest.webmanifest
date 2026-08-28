@@ -7,6 +7,6 @@
   "scope": "./",
   "display": "fullscreen",
   "orientation": "any",
-  "background_color": "#061a66",
-  "theme_color": "#061a66"
+  "background_color": "#070b25",
+  "theme_color": "#070b25"
 }

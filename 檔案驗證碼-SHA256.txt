@@ -1,0 +1,6 @@
+鴨鴨基因實驗室-美術優化版-GitHub完整專案.zip
+SHA-256: 923a39e9420f1cf41615e47baabd03e79a52e75491261af9d76d5f9d7c4e12b5
+
+壓縮包大小：約 2.2 MB
+整理日期：2026-08-28
+來源版本：4a1fcd0（Upgrade dark laboratory and 2.5D interface）

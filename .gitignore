@@ -45,3 +45,6 @@ __pycache__/
 release/*.idsig
 release/fixed/
 release/*-universal.apk
+
+*.tsbuildinfo
+
