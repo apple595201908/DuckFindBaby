@@ -1,15 +1,16 @@
 // Increment this name whenever a shipped URL or asset changes. Keeping it in
 // sync with query versions prevents stale art or logic on mobile browsers.
-const CACHE_NAME = "duck-gene-lab-v25";
+const CACHE_NAME = "duck-gene-lab-v26";
 const ASSETS = [
   "./index.html",
-  "./game.css?v=duck-gene-lab-r22",
-  "./engine.js?v=duck-gene-lab-r22",
-  "./game.js?v=duck-gene-lab-r22",
-  "./manifest.webmanifest?v=duck-gene-lab-r22",
-  "./assets/duck-gene-palette-sheet.png?v=duck-gene-lab-r22",
-  "./assets/duck-mascot-yellow.png?v=duck-gene-lab-r22",
-  "./assets/gene-lab-night-bg.webp?v=duck-gene-lab-r22",
+  "./game.css?v=duck-gene-lab-r23",
+  "./engine.js?v=duck-gene-lab-r23",
+  "./analytics.js?v=duck-gene-lab-r23",
+  "./game.js?v=duck-gene-lab-r23",
+  "./manifest.webmanifest?v=duck-gene-lab-r23",
+  "./assets/duck-gene-palette-sheet.png?v=duck-gene-lab-r23",
+  "./assets/duck-mascot-yellow.png?v=duck-gene-lab-r23",
+  "./assets/gene-lab-night-bg.webp?v=duck-gene-lab-r23",
 ];
 
 self.addEventListener("install", (event) => {

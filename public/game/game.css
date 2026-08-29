@@ -277,7 +277,7 @@ button:focus-visible {
    coordinates so older mobile browsers do not need CSS arithmetic support. */
 .duck-sprite {
   display: block;
-  background-image: url("./assets/duck-gene-palette-sheet.png?v=duck-gene-lab-r22");
+  background-image: url("./assets/duck-gene-palette-sheet.png?v=duck-gene-lab-r23");
   background-repeat: no-repeat;
   background-position: var(--sprite-x-pos, 0%) var(--sprite-y-pos, 0%);
   background-size: 400% 400%;
@@ -1180,7 +1180,7 @@ h2 { font-size: clamp(29px, 4.8vh, 58px); }
 .parent-card-b { box-shadow: 0 9px 0 #67ad8f, 0 16px 27px var(--deep-shadow), 0 0 0 3px rgba(147, 226, 194, 0.48), inset 0 3px 0 #fff, inset 0 -5px 10px rgba(72, 116, 141, 0.12); }
 
 .duck-sprite {
-  background-image: url("./assets/duck-gene-palette-sheet.png?v=duck-gene-lab-r22");
+  background-image: url("./assets/duck-gene-palette-sheet.png?v=duck-gene-lab-r23");
 }
 
 .color-label,

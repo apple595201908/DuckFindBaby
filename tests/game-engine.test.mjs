@@ -259,7 +259,7 @@ test("mobile renderer uses the duck jump itself as the synchronized round clock"
   assert.match(css, /translate3d\(0, 138%, 0\)/);
   assert.match(css, /translate3d\(0, 142%, 0\)/);
   assert.match(css, /background-position: var\(--sprite-x-pos/);
-  assert.match(css, /duck-gene-palette-sheet\.png\?v=duck-gene-lab-r22/);
+  assert.match(css, /duck-gene-palette-sheet\.png\?v=duck-gene-lab-r23/);
   assert.doesNotMatch(css, /background-position:[^;]*calc\([^;]*\*/);
   assert.match(css, /grid-template-columns: minmax\(0, 1fr\) clamp\(48px, 14vw, 76px\) minmax\(0, 1fr\)/);
   assert.match(game, /elements\.grid\.addEventListener\([\s\S]*"pointerdown"/);
@@ -303,17 +303,17 @@ test("mobile renderer uses the duck jump itself as the synchronized round clock"
   assert.doesNotMatch(html, /rotateOverlay|請旋轉裝置|Xiaomi Pad Mini/);
   assert.match(manifest, /"orientation":\s*"any"/);
   assert.match(manifest, /"theme_color":\s*"#070b25"/);
-  assert.match(html, /duck-gene-palette-sheet\.png\?v=duck-gene-lab-r22/);
+  assert.match(html, /duck-gene-palette-sheet\.png\?v=duck-gene-lab-r23/);
   assert.doesNotMatch(html, /duck-gene-lab-bg\.webp/);
 
   const countdownBlock = game.match(
-    /function runCountdown\(token\) \{([\s\S]*?)\n  \}\n\n  function startGame/,
+    /function runCountdown\(token\) \{([\s\S]*?)\r?\n  \}\r?\n\r?\n  function startGame/,
   )?.[1];
   const startBlock = game.match(
-    /function startGame\(\) \{([\s\S]*?)\n  \}\n\n  function makeCandidate/,
+    /function startGame\(\) \{([\s\S]*?)\r?\n  \}\r?\n\r?\n  function makeCandidate/,
   )?.[1];
   const laterRoundBlock = game.match(
-    /function beginRound\(\) \{([\s\S]*?)\n  \}\n\n  function chooseCandidate/,
+    /function beginRound\(\) \{([\s\S]*?)\r?\n  \}\r?\n\r?\n  function chooseCandidate/,
   )?.[1];
   assert.ok(countdownBlock);
   assert.ok(startBlock);

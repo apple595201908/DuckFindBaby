@@ -3,6 +3,12 @@
 
   const Engine = globalThis.DuckEngine;
   if (!Engine) throw new Error("DuckEngine failed to load");
+  const Analytics = globalThis.DuckAnalytics || {
+    startGame: () => "",
+    trackRound() {},
+    endGame() {},
+    trackSetting() {},
+  };
 
   // Cache the stable shell once. Rounds replace only candidate children, which
   // keeps repeated DOM queries and layout work outside the animation loop.
@@ -87,6 +93,10 @@
     bgmStep: 0,
     bgmNextNote: 0,
     scoreAnimation: null,
+    gameplayId: "",
+    gameStartedAt: 0,
+    roundStartedAt: 0,
+    maxCombo: 0,
   };
 
   function setSprite(element, colorId) {
@@ -287,6 +297,17 @@
   }
 
   function showMenu() {
+    if (state.gameplayId) {
+      Analytics.endGame({
+        reason: "quit",
+        completed: false,
+        finalScore: state.score,
+        roundsCompleted: Math.max(0, state.round - 1),
+        maxCombo: state.maxCombo,
+        durationMs: Math.max(0, Math.round(performance.now() - state.gameStartedAt)),
+      });
+      state.gameplayId = "";
+    }
     clearRound();
     stopBgm();
     state.phase = "menu";
@@ -330,6 +351,9 @@
     state.current = null;
     state.phase = "countdown";
     state.paused = false;
+    state.maxCombo = 0;
+    state.gameStartedAt = performance.now();
+    state.gameplayId = Analytics.startGame({ assistEnabled: state.assist });
     updateHud();
     setHidden(elements.menu, true);
     setHidden(elements.rules, true);
@@ -444,6 +468,7 @@
     requestAnimationFrame(() => {
       if (token !== state.token || state.phase !== "playing") return;
       elements.grid.classList.add("animate-wave");
+      state.roundStartedAt = performance.now();
       state.deadline = performance.now() + current.duration;
       startJumpWindow(current, token);
     });
@@ -472,8 +497,22 @@
 
     if (colorId === state.current.target) {
       state.combo += 1;
+      state.maxCombo = Math.max(state.maxCombo, state.combo);
       const earned = Engine.calculateScore(state.current.duration, remaining);
       state.score += earned;
+      Analytics.trackRound({
+        gameplayId: state.gameplayId,
+        roundNumber: state.round,
+        correct: true,
+        earnedScore: earned,
+        totalScore: state.score,
+        combo: state.combo,
+        responseMs: Math.max(0, Math.round(performance.now() - state.roundStartedAt)),
+        parentA: state.current.first,
+        parentB: state.current.second,
+        targetColor: state.current.target,
+        chosenColor: colorId,
+      });
       if (state.score > state.best) state.best = state.score;
       updateHud();
       button.classList.add("correct");
@@ -505,6 +544,19 @@
         beginRound();
       }, 610);
     } else {
+      Analytics.trackRound({
+        gameplayId: state.gameplayId,
+        roundNumber: state.round,
+        correct: false,
+        earnedScore: 0,
+        totalScore: state.score,
+        combo: state.combo,
+        responseMs: Math.max(0, Math.round(performance.now() - state.roundStartedAt)),
+        parentA: state.current.first,
+        parentB: state.current.second,
+        targetColor: state.current.target,
+        chosenColor: colorId,
+      });
       button.classList.add("wrong");
       button.querySelector(".feedback-badge").textContent = "×";
       endGame("wrong");
@@ -514,6 +566,31 @@
   function endGame(reason) {
     if (!state.current || state.phase === "gameover") return;
     state.phase = "gameover";
+    if (reason === "timeout") {
+      Analytics.trackRound({
+        gameplayId: state.gameplayId,
+        roundNumber: state.round,
+        correct: false,
+        earnedScore: 0,
+        totalScore: state.score,
+        combo: state.combo,
+        responseMs: state.current.duration,
+        parentA: state.current.first,
+        parentB: state.current.second,
+        targetColor: state.current.target,
+        chosenColor: null,
+      });
+    }
+    Analytics.endGame({
+      gameplayId: state.gameplayId,
+      reason,
+      completed: true,
+      finalScore: state.score,
+      roundsCompleted: Math.max(0, state.round - 1),
+      maxCombo: state.maxCombo,
+      durationMs: Math.max(0, Math.round(performance.now() - state.gameStartedAt)),
+    });
+    state.gameplayId = "";
     cancelAnimationFrame(state.frame);
     stopBgm();
     elements.grid.classList.remove("animate-wave");
@@ -592,6 +669,7 @@
   $("#resumeButton").addEventListener("click", resumeGame);
   elements.sound.addEventListener("click", () => {
     state.sound = !state.sound;
+    Analytics.trackSetting("sound", state.sound);
     storage.write("duckFamilyMatch.sound", state.sound);
     updateSettings();
     if (state.sound) {
@@ -603,6 +681,7 @@
   });
   elements.assist.addEventListener("click", () => {
     state.assist = !state.assist;
+    Analytics.trackSetting("assist", state.assist);
     storage.write("duckFamilyMatch.assist", state.assist);
     updateSettings();
   });
@@ -634,7 +713,7 @@
   if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
     // Offline support is progressive: registration failure is non-fatal and
     // online play remains available in restricted or private browser modes.
-    window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js?v=duck-gene-lab-r22").catch(() => {}));
+    window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js?v=duck-gene-lab-r23").catch(() => {}));
   }
 
   // Retained for compatibility with the stopped Android wrapper. It is inert in

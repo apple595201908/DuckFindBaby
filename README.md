@@ -1,56 +1,336 @@
-# 鴨鴨基因實驗室｜美術優化版
+# 鴨鴨基因實驗室 Duck Gene Lab
 
-《鴨鴨基因實驗室》是一款手機優先的快速顏色判讀網頁遊戲。玩家觀察兩隻親代鴨的顏色，在候選鴨從實驗艙底部跳起並落回以前，選出符合基因配色規則的寶寶。答得越快分數越高，答錯或超時則結束本次實驗。
+一款手機優先的顏色基因判讀網頁遊戲，以及可自行架設在個人電腦的匿名遊玩數據後台。
 
-[立即遊玩公開網頁版](https://duckling-family-match.yoyo50582.chatgpt.site)
+玩家要在候選鴨跳起並落回以前，依兩隻親代鴨的顏色選出符合配色規則的寶寶；答得越快分數越高，答錯或超時就結束。本倉庫同時提供 Node.js＋SQLite 分析伺服器、密碼保護的響應式管理後台、CSV 匯出，以及讓外部手機連線的 HTTPS Tunnel 啟動工具。
 
-## 主要特色
+[立即遊玩公開網頁版](https://duckling-family-match.yoyo50582.chatgpt.site) · [遊戲開發報告](docs/DEVELOPMENT_REPORT.md) · [後台技術報告](docs/ANALYTICS_DEVELOPMENT_REPORT.md) · [後台操作手冊](docs/ANALYTICS_SERVER.md)
 
-- 14 個高辨識鎖定色號與 12 組配色配方；所有鴨子共用一致的高光與陰影母版。
-- 相似色兩兩互斥，避免近似粉紅、藍或紫色同時成為選項。
-- 候選鴨的跳起與下降就是回合時鐘，不另外顯示秒數進度條。
-- 下降位置分成十個計分區段，單題最高 10 分、最低 1 分。
-- 分數增加時平滑加速，回合由 3.8 秒逐步縮短至最低 1.6 秒。
-- 支援手機與平板直向／橫向、安全區、觸控、鍵盤和全螢幕。
-- 內建 Web Audio BGM、答題音效、震動回饋及 PWA 離線快取。
-- 全介面採糖果色 2.5D 美術，選單、HUD、親代卡、答題艙與按鈕皆具備分層高光、立體厚邊及柔和投影。
-- 背景不含愛心，改用深海藍、鈷藍與靛紫的原創發光基因實驗室，大型 DNA 雙螺旋緩慢漂移，不影響答題辨色。
-- 鴨子保留原本可愛造型與陰影，生成腳本會保護嘴喙、眼睛、腮紅、腹部及透明角落，避免染色破圖。
+> 公開網頁版是遊戲展示。若要查看你自己電腦收集的後台資料，請啟動本倉庫的個人伺服器，再開啟該服務的 `/admin/`；後台不是公開展示網站的一部分。
 
-## 技術架構
+## 目錄
 
-- React 19、TypeScript、Vinext／Vite：網站入口與建置。
-- HTML5、CSS、Vanilla JavaScript：獨立遊戲執行環境。
-- Service Worker、Web App Manifest：離線快取與 PWA。
-- Node.js Test Runner、ESLint：規則與品質驗證。
+- [專案功能](#專案功能)
+- [數據後台可以回答什麼](#數據後台可以回答什麼)
+- [系統架構](#系統架構)
+- [環境需求](#環境需求)
+- [最快啟動方式](#最快啟動方式)
+- [從外面的手機查看後台](#從外面的手機查看後台)
+- [後台登入與設定](#後台登入與設定)
+- [事件與指標定義](#事件與指標定義)
+- [專案結構](#專案結構)
+- [開發與測試](#開發與測試)
+- [資料、隱私與安全](#資料隱私與安全)
+- [備份、還原與長期部署](#備份還原與長期部署)
+- [技術文件與 Codex Skills](#技術文件與-codex-skills)
 
-核心規則與瀏覽器操作分離：
+## 專案功能
 
-- `public/game/engine.js`：色票、配方、候選公平性、速度和計分。
-- `public/game/game.js`：狀態機、DOM、輸入、音訊、暫停和回合流程。
-- `public/game/game.css`：響應式排版、鴨子素材、跳躍和答題回饋。
-- `public/game/sw.js`：離線資產和快取更新策略。
+### 遊戲
 
-核心程式已補上維護註解，重點說明跨檔案時間契約、狀態轉移、候選公平性、輸入鎖定、音訊排程、動畫效能及快取失效原因。
+- 14 個高辨識鎖定色號與 12 組固定基因配方。
+- 正確答案唯一，且排除容易混淆的相似色組合。
+- 候選鴨跳躍本身就是回合倒數，不另放進度條干擾視線。
+- 單題依下降位置給 10 至 1 分，累積分數後由 3.8 秒平滑加速至最低 1.6 秒。
+- 支援手機、平板、桌機、直／橫向、安全區、觸控、鍵盤與全螢幕。
+- Web Audio 背景音樂、答題音效、震動回饋及靜音設定。
+- PWA manifest、Service Worker 與完整離線資產。
+- 深色 2.5D 基因實驗室、糖果色立體 UI、慢速 DNA 動畫及鎖色鴨鴨素材。
 
-## 快速開始
+### 個人分析後台
 
-需要 Node.js 22.13 以上版本。
+- 匿名玩家、工作階段、遊玩局數與正常結束局數。
+- 平均分、最高分、平均通過題數、分數區間與結束原因。
+- 頁面停留時間與真正前景活躍時間。
+- 手機／平板／桌機、作業系統、瀏覽器、語言、時區和畫面尺寸。
+- 回訪玩家率、造訪頻率分層、每個工作階段的重玩率與流量來源。
+- 7／30／90 日或全部期間、每日趨勢、最近 50 個工作階段。
+- UTF-8 CSV 明細匯出，可在 Excel 或試算表繼續分析。
+- 手機版、桌面版皆可使用的密碼登入儀表板。
+- 資料保存於自己的 SQLite，不依賴 Google Analytics 或其他第三方分析帳號。
 
-```bash
+## 數據後台可以回答什麼
+
+| 想知道的問題 | 後台資料／指標 |
+| --- | --- |
+| 有多少人點進遊戲？ | 匿名玩家數、工作階段數、每日趨勢 |
+| 他們用什麼玩？ | 裝置類型、OS、瀏覽器、螢幕和語言 |
+| 在線多久、真的看了多久？ | 頁面停留 `pageMs`、前景活躍 `activeMs` |
+| 每人玩幾局？ | 遊玩局數、play number、每工作階段重玩率 |
+| 有沒有再次回來？ | visit number、回訪玩家率、頻率分層 |
+| 玩得如何？ | 分數、題數、combo、答題速度、結束原因 |
+| 從哪裡來？ | referrer 來源網站 |
+
+匿名玩家是以瀏覽器 localStorage 中的隨機 ID 計算，不等於真實自然人。換裝置、換瀏覽器、無痕模式或清除網站資料都會被視為新玩家。
+
+## 系統架構
+
+```mermaid
+flowchart TB
+    U[玩家瀏覽器] -->|GET /game/| N[Node.js 22 HTTP Server]
+    U -->|匿名事件批次| API[/api/analytics/events]
+    API --> DB[(SQLite WAL)]
+    M[管理者手機／電腦] -->|GET /admin/| N
+    M -->|密碼 + HMAC Cookie| ADMIN[/api/admin/*]
+    ADMIN --> DB
+    CF[Cloudflare Tunnel HTTPS] <--> N
+```
+
+技術棧：
+
+- 遊戲：HTML5、CSS、Vanilla JavaScript、Web Audio、Service Worker、PWA。
+- 網站入口：React 19、TypeScript、Vinext／Vite。
+- 分析伺服器：Node.js 22 內建 `node:http`。
+- 資料庫：Node.js 內建 `node:sqlite`、SQLite WAL。
+- 管理後台：原生 HTML／CSS／JavaScript，mobile-first。
+- 登入：HMAC-SHA256 簽章、12 小時 HttpOnly Cookie。
+- 外部連線：Cloudflare Quick Tunnel；固定網址可換 Named Tunnel。
+- 品質：Node.js Test Runner、ESLint、真實 HTTP＋SQLite 整合測試。
+
+## 環境需求
+
+- Node.js `22.13.0` 以上（必須包含穩定的 `node:sqlite`）。
+- npm。
+- Windows 10／11、macOS 或 Linux。
+- 若要由外面的手機連線：電腦需持續開機並可連上網際網路。
+
+確認版本：
+
+```powershell
+node --version
+npm --version
+```
+
+首次取得專案後安裝依賴：
+
+```powershell
+git clone https://github.com/apple595201908/DuckFindBaby.git
+cd DuckFindBaby
 npm ci
+```
+
+## 最快啟動方式
+
+### Windows 一鍵啟動個人伺服器
+
+雙擊：
+
+```text
+start-duck-server.bat
+```
+
+或在 PowerShell 執行：
+
+```powershell
+npm run analytics:start
+```
+
+第一次啟動會：
+
+1. 建立不會上傳 Git 的 `.env.analytics`。
+2. 安全隨機產生管理員密碼與 Cookie session secret。
+3. 在終端機顯示第一次登入密碼。
+4. 建立 `data/duck-analytics.sqlite`。
+5. 同時供應遊戲、後台與 API。
+
+開啟：
+
+- 遊戲：`http://localhost:8788/game/`
+- 後台：`http://localhost:8788/admin/`
+- 健康檢查：`http://localhost:8788/healthz`
+
+同一個家中 Wi-Fi 的手機可開啟：
+
+```text
+http://你的電腦區網IP:8788/admin/
+```
+
+Windows 防火牆第一次詢問時，個人環境通常只需允許「私人網路」。
+
+### 只開發遊戲／網站入口
+
+```powershell
 npm run dev
 ```
 
-依終端機顯示的本機網址開啟遊戲。
+依終端機顯示的本機網址開啟開發預覽。這個模式不是分析後台；後台請使用 `npm run analytics:start`。
 
-## 品質檢查
+## 從外面的手機查看後台
 
-```bash
+Windows 雙擊：
+
+```text
+start-public-duck-server.bat
+```
+
+或執行：
+
+```powershell
+npm run public:start
+```
+
+腳本會啟動個人伺服器與 Cloudflare Quick Tunnel，終端機會顯示類似：
+
+```text
+https://隨機名稱.trycloudflare.com/game/
+https://隨機名稱.trycloudflare.com/admin/
+```
+
+把 `/admin/` 的 HTTPS 網址存到手機即可從外面查看後台，登入密碼仍取自你電腦上的 `.env.analytics`。實際臨時網址會另寫入被 Git 忽略的 `.duck-public-url.txt`，不會提交到公開倉庫。
+
+注意事項：
+
+- 電腦、Node.js 伺服器與 Tunnel 進程必須保持運行；睡眠、關機或斷網後無法連線。
+- Quick Tunnel 網址每次啟動可能改變，且沒有正式 SLA，適合個人或小量測試。
+- 知道網址的人可以開啟遊戲與登入頁，但沒有密碼不能讀取後台 API。
+- 不要直接將路由器 8788 port 裸露至公網。
+- 需要固定網址時，請使用自有網域＋Cloudflare Named Tunnel，並建議再加 Cloudflare Access。
+
+## 後台登入與設定
+
+### 查找或修改密碼
+
+後台密碼位於專案根目錄的本機檔案：
+
+```text
+.env.analytics
+```
+
+修改 `DUCK_ADMIN_PASSWORD` 後重新啟動服務。密碼至少 10 個字元，建議使用 16 字元以上、不可重用的隨機密碼。不要把真實密碼寫入 README、Issue、聊天截圖或 Git commit。
+
+可從範例建立設定：
+
+```powershell
+Copy-Item analytics.env.example .env.analytics
+```
+
+### 環境變數
+
+| 變數 | 預設值 | 說明 |
+| --- | --- | --- |
+| `DUCK_SERVER_HOST` | `0.0.0.0` | 接受本機與區網連線 |
+| `DUCK_SERVER_PORT` | `8788` | HTTP 連接埠 |
+| `DUCK_ADMIN_PASSWORD` | 首次啟動隨機產生 | 後台密碼，至少 10 字元 |
+| `DUCK_SESSION_SECRET` | 首次啟動隨機產生 | Cookie HMAC secret，至少 32 字元 |
+| `DUCK_ANALYTICS_DB` | `./data/duck-analytics.sqlite` | SQLite 資料庫路徑 |
+| `DUCK_REPORT_TIMEZONE` | `Asia/Taipei` | 每日趨勢使用的時區 |
+| `DUCK_RETENTION_DAYS` | `730` | 自動保留天數；`0` 或負數表示不清理 |
+| `DUCK_ALLOWED_ORIGINS` | 空白 | 額外遊戲來源，多個以逗號分隔 |
+| `DUCK_TRUST_PROXY` | `false` | 只有位於可信任反向代理後才設 `true` |
+
+### 遊戲與後台分開網域
+
+預設同一服務的 `/game/` 直接送到同源 API，不需額外設定。若遊戲部署在其他靜態網站，可在遊戲 HTML 的 `<head>` 指定：
+
+```html
+<meta
+  name="duck-analytics-endpoint"
+  content="https://你的後台網域/api/analytics/events"
+/>
+```
+
+同時在 `.env.analytics` 設定：
+
+```dotenv
+DUCK_ALLOWED_ORIGINS=https://你的遊戲網域
+```
+
+重新啟動服務後生效。不要使用 `*` 放寬所有來源。
+
+## 事件與指標定義
+
+### 匿名事件
+
+| Event | 觸發時機 | 用途 |
+| --- | --- | --- |
+| `session_start` | 頁面分析工作階段開始 | 裝置、畫面、語言、來源、造訪次數 |
+| `heartbeat` | 可見頁面每 15 秒 | 活躍與停留時間 |
+| `session_end` | pagehide／離開頁面 | 最後時間與工作階段結束 |
+| `game_start` | 開始一局 | 遊玩次數、設定 |
+| `round_answer` | 每次作答 | 正誤、反應時間、分數、題目顏色 |
+| `game_end` | 結束一局 | 分數、題數、combo、時長、原因 |
+| `settings_change` | 支援的設定被修改 | 設定使用情形 |
+
+瀏覽器最多暫存 250 個離線事件，每批最多上送 50 個。網路恢復後會重送；SQLite 使用 event ID 主鍵去重，因此重複傳送不會增加數字。加入 `?analytics=off` 可停用該次載入的分析。
+
+### 核心 KPI
+
+- 匿名玩家：選擇期間內開始工作階段的不同 visitor ID。
+- 回訪率：生命週期工作階段大於 1 的活躍 visitor ÷ 活躍 visitor。
+- 重玩率：遊玩超過一局的 session ÷ 至少玩一局的 session。
+- 平均活躍：所有範圍內 session 的最大已知 `activeMs` 平均。
+- 正常結束局：`completed = 1` 的 gameplay。
+- 報表時間：資料庫保存 UTC，趨勢依 `DUCK_REPORT_TIMEZONE` 分日。
+
+精確公式、資料表與 API 契約見[後台技術報告](docs/ANALYTICS_DEVELOPMENT_REPORT.md)及 [Schema／Events Reference](.codex/skills/duck-analytics-backend/references/schema-and-events.md)。
+
+## 專案結構
+
+```text
+DuckFindBaby/
+├─ app/                              # React／TypeScript 網站入口
+├─ public/
+│  ├─ admin/
+│  │  ├─ index.html                  # 後台登入與儀表板骨架
+│  │  ├─ admin.css                   # 手機／桌機響應式樣式
+│  │  └─ admin.js                    # 登入、KPI、圖表、CSV 操作
+│  └─ game/
+│     ├─ index.html                  # 遊戲入口
+│     ├─ engine.js                   # 配色、題目、速度、計分規則
+│     ├─ game.js                     # 遊戲狀態、輸入、音訊、追蹤串接
+│     ├─ analytics.js                # 匿名事件、裝置、時間、離線佇列
+│     ├─ game.css                    # 響應式遊戲與動畫
+│     └─ sw.js                       # PWA 離線快取
+├─ server/
+│  ├─ index.mjs                      # 設定、啟動、安全關閉
+│  ├─ app.mjs                        # HTTP、API、登入、CORS、CSV
+│  └─ analytics-store.mjs            # SQLite schema、交易與報表查詢
+├─ scripts/
+│  └─ start-public-server.mjs        # 本機服務＋Quick Tunnel
+├─ tests/
+│  └─ analytics-server.test.mjs      # 真實 HTTP＋SQLite 整合測試
+├─ docs/
+│  ├─ ANALYTICS_SERVER.md            # 安裝、公開、備份操作手冊
+│  ├─ ANALYTICS_DEVELOPMENT_REPORT.md# 本次後台技術報告
+│  └─ DEVELOPMENT_REPORT.md          # 遊戲開發報告
+├─ .codex/skills/
+│  ├─ duck-gene-lab-development/     # 遊戲維護 Skill
+│  └─ duck-analytics-backend/        # 後台維護 Skill
+├─ analytics.env.example             # 可安全提交的環境變數範例
+├─ start-duck-server.bat              # Windows 本機／區網啟動
+└─ start-public-duck-server.bat       # Windows 公網 HTTPS 啟動
+```
+
+## 開發與測試
+
+### npm scripts
+
+| 命令 | 用途 |
+| --- | --- |
+| `npm run dev` | 啟動網站開發預覽 |
+| `npm run build` | 正式建置 |
+| `npm run lint` | ESLint 靜態檢查 |
+| `npm test` | 正式建置＋全部自動測試 |
+| `npm run test:analytics` | 只跑後台 HTTP／SQLite 整合測試 |
+| `npm run analytics:start` | 啟動遊戲＋分析 API＋後台 |
+| `npm run public:start` | 啟動伺服器＋外網 Quick Tunnel |
+
+完整驗證：
+
+```powershell
+npm ci
 npm run lint
-npm run test
+npm test
+npm run test:analytics
 git diff --check
 ```
+
+目前測試套件共 15 項，涵蓋：
+
+- 12 組基因配方、14 個鎖定色、相似色互斥與長時間題目公平性。
+- 依分數加速、鴨子下降計分區段、手機跳躍時鐘與離線資產。
+- React UI 元件與渲染 HTML。
+- 事件接收、重複去除、未登入阻擋、密碼登入、KPI、CSV 與靜態路由。
 
 重新產生鎖色鴨鴨圖集：
 
@@ -58,60 +338,81 @@ git diff --check
 bash scripts/generate_gene_palette_sprites.sh
 ```
 
-## GitHub 上傳方式
+修改 `analytics.js`、`game.js` 或其他被 PWA 快取的資產後，必須同步更新 `public/game/sw.js` 的 cache name 與 `public/game/index.html` 的版本 query，確保既有玩家拿到新版。
 
-解壓縮專案後，在專案根目錄執行：
+## 資料、隱私與安全
 
-```bash
-git init
-git add .
-git commit -m "Initial release: Duck Gene Lab Ver1.0"
-git branch -M main
-git remote add origin https://github.com/你的帳號/你的倉庫名稱.git
-git push -u origin main
-```
+### 收集內容
 
-請先在 GitHub 建立空白倉庫，並把範例中的帳號與倉庫名稱換成自己的內容。專案包不包含 `.git`、登入資料、環境密鑰、`node_modules`、建置輸出、APK 或停止維護的 Android 封裝。
+系統收集隨機匿名 ID、工作階段與遊玩事件、分數／題數／反應時間、裝置分類、user agent、螢幕、語言、時區、來源網址及活躍時間。
 
-## 靜態網頁部署
+### 不收集內容
 
-完整遊戲位於 `public/game/`，可直接部署到支援靜態檔案的服務。若使用完整 React 專案，請依目前 Vinext 設定進行建置。
+預設不收集姓名、Email、電話、登入帳號、廣告 ID、精準 GPS 或原始 IP，也不將資料送到第三方分析服務。
 
-修改已發布的 JavaScript、CSS 或圖片後，必須同步更新：
+### 安全控制
 
-1. `public/game/index.html` 與 `app/page.tsx` 的查詢版本。
-2. `public/game/sw.js` 的資產網址。
-3. `public/game/sw.js` 的 `CACHE_NAME`。
+- 後台資料 API 全部需要有效的 HMAC 簽章 Cookie。
+- Cookie 為 HttpOnly、SameSite=Strict、12 小時有效；HTTPS 時加入 Secure。
+- 密碼與簽章採 timing-safe 比對。
+- JSON 最大 128 KiB，每批 1–50 件，只接受事件白名單及合法 ID。
+- 收集／登入具每來源每分鐘速率限制。
+- SQLite 使用 prepared statements、foreign keys、交易及事件 ID 去重。
+- 靜態路徑限制在 `public/`，回應含 CSP、nosniff 與 referrer policy。
+- `.env.analytics`、`data/`、SQLite、log、PID、Tunnel URL、`node_modules/` 和建置輸出全部被 Git 忽略。
 
-這能避免行動瀏覽器繼續使用舊程式或舊素材。
+公開營運前，請依所在地規範加入隱私說明，告知資料用途、保存期限與 `?analytics=off` 停用方式。更完整的威脅與限制分析見[後台技術報告](docs/ANALYTICS_DEVELOPMENT_REPORT.md)。
 
-## 文件與開發 Skill
+## 備份、還原與長期部署
 
-- [`docs/DEVELOPMENT_REPORT.md`](docs/DEVELOPMENT_REPORT.md)：完整開發報告、架構、公式、問題修正與交付規格。
-- [`docs/GENE_COLOR_SPEC.md`](docs/GENE_COLOR_SPEC.md)：14 色色號、12 組配方及素材生成規格。
-- [`docs/RESEARCH_AND_RULES.md`](docs/RESEARCH_AND_RULES.md)：玩法研究與版權界線。
-- [`.codex/skills/duck-gene-lab-development/SKILL.md`](.codex/skills/duck-gene-lab-development/SKILL.md)：供 Codex 維護本遊戲時使用的開發 Skill。
-- [`PROJECT_MANIFEST.md`](PROJECT_MANIFEST.md)：GitHub 專案包的包含與排除清單。
+### 備份
 
-使用開發 Skill 時，可在 Codex 中指定：
+最安全方式是先停止伺服器，再備份整個 `data/`：
 
 ```text
-Use $duck-gene-lab-development to maintain the Duck Gene Lab web game.
+data/
+├─ duck-analytics.sqlite
+├─ duck-analytics.sqlite-wal   # 運行中可能存在
+└─ duck-analytics.sqlite-shm   # 運行中可能存在
 ```
 
-## 操作
+若必須在服務運行時複製，三個 SQLite／WAL／SHM 檔案要一起保存。不要只備份主 `.sqlite` 後假設最新交易都已包含。
 
-- 觸控／滑鼠：直接點選候選鴨。
-- 鍵盤：數字鍵 `1`–`6`。
-- `Esc`：暫停或繼續。
-- 色彩輔助：顯示符號與顏色名稱。
+### 還原
 
-## 素材與授權
+1. 停止 Node.js 服務。
+2. 備份目前 `data/` 以便回退。
+3. 將備份檔放回 `DUCK_ANALYTICS_DB` 指定的位置。
+4. 重新啟動並檢查 `/healthz`、後台登入及最近資料。
 
-鴨鴨造型、基因實驗室場景、介面、音效與程式均為本專案製作。參考圖片只用於理解抽象配色規則與遊戲節奏，沒有收錄原作圖像、角色、標誌、文字、音樂或程式素材。
+### 固定公網網址
 
-本專案原創內容採保留所有權利方式提供，詳見 [`LICENSE.md`](LICENSE.md)。第三方套件仍依各自的授權條款使用。正式商用前應另外完成名稱／商標、隱私權、無障礙、多機型與營運地區規範檢查。
+Quick Tunnel 適合臨時使用。長期部署建議：
 
-## 本壓縮包版本
+1. 準備由 Cloudflare 管理 DNS 的自有網域。
+2. 建立 Named Tunnel，將固定 hostname 指向 `http://localhost:8788`。
+3. 確認 HTTPS 與 forwarded protocol 設定。
+4. 視需要加 Cloudflare Access、IP／地區政策或另一層驗證。
+5. 設定作業系統開機啟動、程序監控與定期備份。
+6. 不要把 Tunnel token、密碼或 secret 提交到 GitHub。
 
-此檔案是目前公開網站的「深色 2.5D 實驗室＋糖果色立體 UI」美術優化版。壓縮包已排除既有 Git 紀錄、登入資料、網站專案識別碼、建置快取、Android 封裝與 APK，可直接作為新的 GitHub 倉庫內容。
+## 技術文件與 Codex Skills
+
+| 文件／Skill | 用途 |
+| --- | --- |
+| [後台技術報告](docs/ANALYTICS_DEVELOPMENT_REPORT.md) | 架構、資料流、schema、KPI、安全、測試與限制 |
+| [後台操作手冊](docs/ANALYTICS_SERVER.md) | 啟動、外網、設定、固定網址與備份 |
+| [遊戲開發報告](docs/DEVELOPMENT_REPORT.md) | 遊戲規則、美術、動畫與驗證 |
+| [研究與規則](docs/RESEARCH_AND_RULES.md) | 遊戲來源研究與規則依據 |
+| [duck-analytics-backend Skill](.codex/skills/duck-analytics-backend/SKILL.md) | 維護後台時的事件、隱私、安全與驗證規範 |
+| [duck-gene-lab-development Skill](.codex/skills/duck-gene-lab-development/SKILL.md) | 維護遊戲時的配色、計分、公平性、響應式與離線規範 |
+
+## 操作方式
+
+- 點擊／觸控：選擇候選鴨或介面按鈕。
+- 鍵盤：`1`–`4` 選擇答案，`Enter` 開始／再玩一次，`Space` 或 `Esc` 暫停／繼續。
+- 手機：支援安全區與直／橫向；需要時可安裝為 PWA。
+
+## License
+
+本專案授權內容見 [LICENSE.md](LICENSE.md)。公開部署、素材再利用或二次發佈前，請確認授權條款及第三方來源說明。

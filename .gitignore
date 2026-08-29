@@ -40,6 +40,8 @@ next-env.d.ts
 /.sites-runtime/
 /outputs/
 /work/
+/data/
+.duck-public-url.txt
 __pycache__/
 *.pyc
 release/*.idsig

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Duck Analytics Backend"
+  short_description: "Maintain the anonymous SQLite game analytics dashboard"
+  default_prompt: "Use $duck-analytics-backend to maintain or extend the Duck Gene Lab analytics server and dashboard."

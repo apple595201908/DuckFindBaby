@@ -1,11 +1,17 @@
 import vinext from "vinext";
+import { readFile } from "node:fs/promises";
 import { defineConfig } from "vite";
-import hostingConfig from "./.openai/hosting.json";
 import { sites } from "./build/sites-vite-plugin";
 
 const SITE_CREATOR_PLACEHOLDER_DATABASE_ID =
   "00000000-0000-4000-8000-000000000000";
 
+// Public GitHub packages intentionally omit the original Sites project ID.
+// Local development and the personal analytics server do not need bindings;
+// deployment environments can still inject this file when required.
+const hostingConfig = await readFile(new URL("./.openai/hosting.json", import.meta.url), "utf8")
+  .then((contents) => JSON.parse(contents) as { d1?: string | null; r2?: string | null })
+  .catch(() => ({ d1: null, r2: null }));
 const { d1, r2 } = hostingConfig;
 
 // macOS Seatbelt blocks FSEvents, so Codex previews need polling for HMR.

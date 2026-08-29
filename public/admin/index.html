@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#08142f" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>鴨鴨數據中心</title>
+    <link rel="icon" href="/favicon.svg" />
+    <link rel="stylesheet" href="/admin/admin.css" />
+  </head>
+  <body>
+    <div class="ambient ambient-one" aria-hidden="true"></div>
+    <div class="ambient ambient-two" aria-hidden="true"></div>
+
+    <main id="loginView" class="login-shell">
+      <section class="login-card" aria-labelledby="loginTitle">
+        <div class="brand-mark" aria-hidden="true">🦆</div>
+        <p class="eyebrow">DUCK GENE LAB</p>
+        <h1 id="loginTitle">鴨鴨數據中心</h1>
+        <p class="login-copy">登入你的個人遊戲後台，查看玩家裝置、遊玩表現、停留時間與回訪情形。</p>
+        <form id="loginForm">
+          <label for="password">管理員密碼</label>
+          <div class="password-row">
+            <input id="password" name="password" type="password" autocomplete="current-password" required autofocus />
+            <button id="loginButton" type="submit">進入後台</button>
+          </div>
+          <p id="loginError" class="form-error" role="alert"></p>
+        </form>
+        <p class="privacy-line"><span aria-hidden="true">●</span> 第一方匿名統計，不保存玩家姓名與 IP 位址</p>
+      </section>
+    </main>
+
+    <div id="dashboardView" class="dashboard-shell hidden">
+      <header class="topbar">
+        <a class="brand" href="/admin/" aria-label="鴨鴨數據中心首頁">
+          <span class="brand-icon" aria-hidden="true">🦆</span>
+          <span><small>DUCK GENE LAB</small><strong>鴨鴨數據中心</strong></span>
+        </a>
+        <div class="top-actions">
+          <a class="ghost-button" href="/game/" target="_blank" rel="noreferrer">開啟遊戲 ↗</a>
+          <button id="logoutButton" class="icon-button" type="button" title="登出" aria-label="登出">⌁</button>
+        </div>
+      </header>
+
+      <main class="dashboard">
+        <section class="welcome-row">
+          <div>
+            <p class="eyebrow">OVERVIEW</p>
+            <h1>遊戲營運總覽</h1>
+            <p id="lastUpdated" class="updated-text">正在讀取最新資料…</p>
+          </div>
+          <div class="filters">
+            <label for="rangeSelect">統計期間</label>
+            <select id="rangeSelect">
+              <option value="7d">最近 7 天</option>
+              <option value="30d" selected>最近 30 天</option>
+              <option value="90d">最近 90 天</option>
+              <option value="all">全部時間</option>
+            </select>
+            <button id="refreshButton" class="secondary-button" type="button">重新整理</button>
+            <button id="exportButton" class="primary-button" type="button">匯出 CSV</button>
+          </div>
+        </section>
+
+        <div id="errorBanner" class="error-banner hidden" role="alert"></div>
+
+        <section class="metric-grid" aria-label="核心指標">
+          <article class="metric-card accent-cyan">
+            <div class="metric-label"><span>不重複玩家</span><b>UV</b></div>
+            <strong id="metricVisitors">—</strong>
+            <p id="metricVisitorsHint">回訪玩家 —</p>
+          </article>
+          <article class="metric-card accent-purple">
+            <div class="metric-label"><span>遊玩次數</span><b>PLAY</b></div>
+            <strong id="metricGameplays">—</strong>
+            <p id="metricGameplaysHint">每工作階段重玩率 —</p>
+          </article>
+          <article class="metric-card accent-yellow">
+            <div class="metric-label"><span>平均分數</span><b>SCORE</b></div>
+            <strong id="metricAverageScore">—</strong>
+            <p id="metricScoreHint">最高分 —</p>
+          </article>
+          <article class="metric-card accent-pink">
+            <div class="metric-label"><span>平均活躍時間</span><b>TIME</b></div>
+            <strong id="metricActiveTime">—</strong>
+            <p id="metricActiveHint">總活躍時間 —</p>
+          </article>
+        </section>
+
+        <section class="content-grid">
+          <article class="panel trend-panel">
+            <div class="panel-heading">
+              <div><p class="eyebrow">TREND</p><h2>每日玩家與遊玩趨勢</h2></div>
+              <div class="legend"><span><i class="cyan"></i>玩家</span><span><i class="purple"></i>遊玩</span></div>
+            </div>
+            <div id="trendChart" class="trend-chart" aria-label="每日趨勢圖"></div>
+          </article>
+
+          <article class="panel score-panel">
+            <div class="panel-heading"><div><p class="eyebrow">SCORE</p><h2>分數分布</h2></div></div>
+            <div id="scoreDistribution" class="vertical-bars"></div>
+          </article>
+        </section>
+
+        <section class="content-grid three-columns">
+          <article class="panel">
+            <div class="panel-heading"><div><p class="eyebrow">DEVICE</p><h2>使用設備</h2></div></div>
+            <div id="deviceBreakdown" class="breakdown-list"></div>
+          </article>
+          <article class="panel">
+            <div class="panel-heading"><div><p class="eyebrow">SYSTEM</p><h2>作業系統</h2></div></div>
+            <div id="osBreakdown" class="breakdown-list"></div>
+          </article>
+          <article class="panel">
+            <div class="panel-heading"><div><p class="eyebrow">BROWSER</p><h2>瀏覽器</h2></div></div>
+            <div id="browserBreakdown" class="breakdown-list"></div>
+          </article>
+        </section>
+
+        <section class="content-grid three-columns">
+          <article class="panel">
+            <div class="panel-heading"><div><p class="eyebrow">LOYALTY</p><h2>玩家回訪層級</h2></div></div>
+            <div id="visitorFrequency" class="breakdown-list"></div>
+          </article>
+          <article class="panel">
+            <div class="panel-heading"><div><p class="eyebrow">RESULT</p><h2>遊戲結束原因</h2></div></div>
+            <div id="endReasons" class="breakdown-list"></div>
+          </article>
+          <article class="panel">
+            <div class="panel-heading"><div><p class="eyebrow">SOURCE</p><h2>流量來源</h2></div></div>
+            <div id="referrerBreakdown" class="breakdown-list"></div>
+          </article>
+        </section>
+
+        <section class="panel sessions-panel">
+          <div class="panel-heading">
+            <div><p class="eyebrow">RECENT SESSIONS</p><h2>最近遊玩工作階段</h2></div>
+            <p>最多顯示 50 筆</p>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>開始時間</th><th>匿名玩家</th><th>設備</th><th>環境</th><th>活躍時間</th><th>遊玩次數</th><th>最高分</th><th>造訪次數</th></tr></thead>
+              <tbody id="sessionsBody"></tbody>
+            </table>
+          </div>
+          <div id="sessionsEmpty" class="empty-state hidden">還沒有資料。開啟遊戲玩一局，這裡就會出現第一筆紀錄。</div>
+        </section>
+
+        <footer>
+          <p><span class="status-dot"></span>資料保存在這台電腦的 SQLite，不記錄玩家 IP</p>
+          <p id="timezoneLabel"></p>
+        </footer>
+      </main>
+    </div>
+
+    <script src="/admin/admin.js"></script>
+  </body>
+</html>
